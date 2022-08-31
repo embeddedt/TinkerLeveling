@@ -1,5 +1,6 @@
 plugins {
     id 'net.minecraftforge.gradle' version '5.1.+'
+    id 'com.matthewprenger.cursegradle' version '1.4.0'
 }
 
 
@@ -170,6 +171,33 @@ jar {
 
 jar.finalizedBy('reobfJar')
 
+task sourcesJar(type: Jar) {
+    archiveClassifier.set('sources')
+    from sourceSets.main.allJava
+}
+
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
+}
+
+curseforge {
+    if (System.getenv("CURSEFORGE_TOKEN") != null) {
+        apiKey = System.getenv("CURSEFORGE_TOKEN")
+        project {
+            id = "666778"
+            changelog = 'https://github.com/embeddedt/TinkerLeveling/commits/main'
+            changelogType = "markdown"
+            releaseType = "alpha"
+            addGameVersion "Forge"
+            addGameVersion "1.18.2"
+
+            mainArtifact(jar) {
+                relations {
+                    requiredDependency "tinkers-construct"
+                }
+            }
+
+            addArtifact sourcesJar
+        }
+    }
 }
