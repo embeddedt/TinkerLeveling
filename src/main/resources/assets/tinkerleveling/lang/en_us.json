@@ -1,0 +1,33 @@
+{
+  "tooltip.tinkerleveling.level": "Level",
+  "tooltip.tinkerleveling.xp": "XP",
+
+  "tooltip.tinkerleveling.level.0": "Like new",
+  "tooltip.tinkerleveling.level.1": "Clumsy",
+  "tooltip.tinkerleveling.level.2": "Comfortable",
+  "tooltip.tinkerleveling.level.3": "Accustomed",
+  "tooltip.tinkerleveling.level.4": "Adept",
+  "tooltip.tinkerleveling.level.5": "Expert",
+  "tooltip.tinkerleveling.level.6": "Master",
+  "tooltip.tinkerleveling.level.7": "Grandmaster",
+  "tooltip.tinkerleveling.level.8": "Heroic",
+  "tooltip.tinkerleveling.level.9": "Legendary",
+  "tooltip.tinkerleveling.level.10": "Godlike",
+  "tooltip.tinkerleveling.level.11": "Awesome",
+  "tooltip.tinkerleveling.level.19": "MoxieGrrl",
+  "tooltip.tinkerleveling.level.42": "boni",
+  "tooltip.tinkerleveling.level.66": "Jadedcat",
+  "tooltip.tinkerleveling.level.99": "Hacker",
+
+  "message.levelup.2": "You begin to feel comfortable handling the %s",
+  "message.levelup.3": "You are now accustomed to the weight of the %s",
+  "message.levelup.4": "You have become adept at handling the %s",
+  "message.levelup.5": "You are now an expert at using the %s !",
+  "message.levelup.6": "You have mastered the %s!",
+  "message.levelup.7": "You have grandmastered the %s!",
+  "message.levelup.8": "You feel like you could fulfill mighty deeds with your %s!",
+  "message.levelup.9": "You and your %s are living legends!",
+  "message.levelup.10": "No god could stand in the way of you and your %s!",
+  "message.levelup.11": "Your %s is pure awesome.",
+  "message.levelup.generic": "Your %s has reached level "
+}
