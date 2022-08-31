@@ -15,6 +15,7 @@ import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
 import org.embeddedt.tinkerleveling.capability.CapabilityDamageXp;
+import slimeknights.tconstruct.common.SoundUtils;
 import slimeknights.tconstruct.library.modifiers.Modifier;
 import slimeknights.tconstruct.library.tools.SlotType;
 import slimeknights.tconstruct.library.tools.context.ToolAttackContext;
@@ -103,10 +104,8 @@ public class ModToolLeveling extends Modifier {
 
         if(leveledUp) {
             if(!player.getLevel().isClientSide) {
-                DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
-                    ClientHelper.playLevelupDing(player);
-                    ClientHelper.sendLevelUpMessage(levelData.getInt(LEVEL_KEY), player);
-                });
+                SoundUtils.playSoundForPlayer(player, TinkerLeveling.SOUND_LEVELUP, 1f, 1f);
+                TinkerPacketHandler.sendLevelUp(levelData.getInt(LEVEL_KEY), player);
             }
             /* FIXME: no other way of doing this that I see */
             if(tool instanceof ToolStack) {

@@ -48,6 +48,7 @@ public class TinkerLeveling {
         MinecraftForge.EVENT_BUS.register(this);
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::registerModifiers);
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, TinkerConfig.COMMON_CONFIG);
+        TinkerPacketHandler.register();
 
         instance = this;
     }
