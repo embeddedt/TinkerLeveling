@@ -47,7 +47,7 @@ public class TinkerLeveling {
         // Register ourselves for server and other game events we are interested in
         MinecraftForge.EVENT_BUS.register(this);
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::registerModifiers);
-        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, TinkerConfig.COMMON_CONFIG);
+        ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, TinkerConfig.SERVER_CONFIG);
         TinkerPacketHandler.register();
 
         instance = this;
