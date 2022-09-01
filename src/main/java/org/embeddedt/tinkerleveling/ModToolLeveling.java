@@ -141,7 +141,13 @@ public class ModToolLeveling extends Modifier implements IHarvestModifier, IShea
 
     @Override
     public void onAttacked(IToolStackView tool, int level, EquipmentContext context, EquipmentSlot slotType, DamageSource source, float amount, boolean isDirectDamage) {
-        if(isDirectDamage && context.getEntity() instanceof Player player && !player.getLevel().isClientSide) {
+        if(!(context.getEntity() instanceof Player player))
+            return;
+        boolean wasMobDamage = source.getEntity() != player && source.getEntity() instanceof LivingEntity;
+        if(isDirectDamage
+                && (wasMobDamage || TinkerConfig.allowArmorExploits.get())
+                && slotType.getType() == EquipmentSlot.Type.ARMOR /* only level armor */
+                && !player.getLevel().isClientSide) {
             addXp(tool, 1, player);
         }
     }
