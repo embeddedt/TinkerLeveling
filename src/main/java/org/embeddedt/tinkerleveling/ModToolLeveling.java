@@ -1,23 +1,26 @@
 package org.embeddedt.tinkerleveling;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.InteractionHand;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.context.UseOnContext;
-import net.minecraft.world.level.Level;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.fml.DistExecutor;
+import net.minecraft.world.level.block.state.BlockState;
 import org.embeddedt.tinkerleveling.capability.CapabilityDamageXp;
 import slimeknights.tconstruct.common.SoundUtils;
 import slimeknights.tconstruct.library.modifiers.Modifier;
+import slimeknights.tconstruct.library.modifiers.hooks.IHarvestModifier;
+import slimeknights.tconstruct.library.modifiers.hooks.IShearModifier;
 import slimeknights.tconstruct.library.tools.SlotType;
+import slimeknights.tconstruct.library.tools.context.EquipmentContext;
 import slimeknights.tconstruct.library.tools.context.ToolAttackContext;
 import slimeknights.tconstruct.library.tools.context.ToolHarvestContext;
 import slimeknights.tconstruct.library.tools.context.ToolRebuildContext;
@@ -28,9 +31,10 @@ import slimeknights.tconstruct.library.tools.nbt.ToolStack;
 import slimeknights.tconstruct.library.utils.RestrictedCompoundTag;
 import slimeknights.tconstruct.tools.ToolDefinitions;
 
+import javax.annotation.Nullable;
 import java.util.UUID;
 
-public class ModToolLeveling extends Modifier {
+public class ModToolLeveling extends Modifier implements IHarvestModifier, IShearModifier {
 
     public static final ResourceLocation XP_KEY = new ResourceLocation(TinkerLeveling.MODID, "xp");
     public static final ResourceLocation BONUS_MODIFIERS_KEY = new ResourceLocation(TinkerLeveling.MODID, "bonus_modifiers");
@@ -116,12 +120,29 @@ public class ModToolLeveling extends Modifier {
         }
     }
 
+    @SuppressWarnings("unchecked")
+    @Nullable
+    @Override
+    public <T> T getModule(Class<T> type) {
+        if (type == IHarvestModifier.class || type == IShearModifier.class) {
+            return (T) this;
+        }
+        return null;
+    }
+
     /* Handlers */
 
     @Override
     public void afterBlockBreak(IToolStackView tool, int level, ToolHarvestContext context) {
         if(context.isEffective() && context.getPlayer() != null) {
             addXp(tool, 1, context.getPlayer());
+        }
+    }
+
+    @Override
+    public void onAttacked(IToolStackView tool, int level, EquipmentContext context, EquipmentSlot slotType, DamageSource source, float amount, boolean isDirectDamage) {
+        if(isDirectDamage && context.getEntity() instanceof Player player && !player.getLevel().isClientSide) {
+            addXp(tool, 1, player);
         }
     }
 
@@ -145,12 +166,13 @@ public class ModToolLeveling extends Modifier {
     }
 
     @Override
-    public InteractionResult afterBlockUse(IToolStackView tool, int level, UseOnContext context, EquipmentSlot slot) {
-        if(context.getPlayer() == null || context.getPlayer().isCrouching())
-            return InteractionResult.PASS;
-        if(tool.getDefinition() == ToolDefinitions.MATTOCK || tool.getDefinition() == ToolDefinitions.SCYTHE) {
+    public void afterHarvest(IToolStackView tool, int level, UseOnContext context, ServerLevel world, BlockState state, BlockPos pos) {
+        if(context.getPlayer() != null)
             addXp(tool, 1, context.getPlayer());
-        }
-        return InteractionResult.PASS;
+    }
+
+    @Override
+    public void afterShearEntity(IToolStackView tool, int level, Player player, Entity entity, boolean isTarget) {
+        addXp(tool, 1, player);
     }
 }

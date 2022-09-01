@@ -23,8 +23,10 @@ import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.embeddedt.tinkerleveling.capability.CapabilityDamageXp;
 import org.slf4j.Logger;
+import slimeknights.tconstruct.common.TinkerTags;
 import slimeknights.tconstruct.library.modifiers.util.ModifierDeferredRegister;
 import slimeknights.tconstruct.library.modifiers.util.StaticModifier;
+import slimeknights.tconstruct.library.tools.helper.ModifierUtil;
 import slimeknights.tconstruct.library.tools.item.ModifiableItem;
 import slimeknights.tconstruct.library.tools.nbt.ToolStack;
 
@@ -58,7 +60,6 @@ public class TinkerLeveling {
     }
 
     private static final ResourceLocation CAPABILITY_KEY = new ResourceLocation(TinkerLeveling.MODID, "entityxp");
-    private static final ResourceLocation TOOL_CAP_KEY = new ResourceLocation(TinkerLeveling.MODID, "toolxp");
 
     @SubscribeEvent
     public void attachEntityDamageCap(AttachCapabilitiesEvent<Entity> event) {
@@ -78,9 +79,9 @@ public class TinkerLeveling {
 
     private void processInvList(NonNullList<ItemStack> items) {
         for(ItemStack itemStack : items) {
-            if(!itemStack.isEmpty() && itemStack.getItem() instanceof ModifiableItem) {
-                ToolStack tool = ToolStack.from(itemStack);
-                if(tool.getModifierLevel(LEVELING_MODIFIER.getId()) == 0) {
+            if(itemStack.is(TinkerTags.Items.MODIFIABLE)) {
+                if(ModifierUtil.getModifierLevel(itemStack, LEVELING_MODIFIER.getId()) == 0) {
+                    ToolStack tool = ToolStack.from(itemStack);
                     tool.addModifier(LEVELING_MODIFIER.getId(), 1);
                 }
             }
@@ -89,6 +90,7 @@ public class TinkerLeveling {
 
     @SubscribeEvent
     public void onPlayerTick(TickEvent.PlayerTickEvent event) {
+        /* TODO: replace with tool building event if/when Tinkers adds one */
         if(!event.player.getLevel().isClientSide) {
             Inventory inventory = event.player.getInventory();
             processInvList(inventory.items);
