@@ -1,10 +1,8 @@
 package org.embeddedt.tinkerleveling;
 
-import net.minecraft.world.item.Item;
+import net.minecraft.item.Item;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.fml.common.Mod;
-import slimeknights.tconstruct.common.TinkerTags;
-import slimeknights.tconstruct.tools.ToolDefinitions;
 
 @Mod.EventBusSubscriber(modid = TinkerLeveling.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class TinkerConfig {

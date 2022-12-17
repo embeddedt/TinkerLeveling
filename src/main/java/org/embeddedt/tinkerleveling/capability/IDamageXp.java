@@ -1,17 +1,16 @@
 package org.embeddedt.tinkerleveling.capability;
 
-import net.minecraft.nbt.ListTag;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.nbt.ListNBT;
 import net.minecraftforge.common.util.INBTSerializable;
 
 import java.util.UUID;
 
-public interface IDamageXp extends INBTSerializable<ListTag> {
-    void addDamageFromTool(float damage, UUID tool, Player player);
+public interface IDamageXp extends INBTSerializable<ListNBT> {
+    void addDamageFromTool(float damage, UUID tool, PlayerEntity player);
 
-    float getDamageDealtByTool(UUID tool, Player player);
+    float getDamageDealtByTool(UUID tool, PlayerEntity player);
 
     void distributeXpToTools(LivingEntity deadEntity);
 }

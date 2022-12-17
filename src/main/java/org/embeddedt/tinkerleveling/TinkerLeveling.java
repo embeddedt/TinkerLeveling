@@ -1,14 +1,12 @@
 package org.embeddedt.tinkerleveling;
 
-import com.mojang.logging.LogUtils;
-import net.minecraft.core.NonNullList;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.sounds.SoundEvent;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.Block;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.NonNullList;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.SoundEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.RegistryEvent;
@@ -16,18 +14,20 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModLoadingContext;
+import net.minecraftforge.fml.RegistryObject;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.registries.DeferredRegister;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.embeddedt.tinkerleveling.capability.CapabilityDamageXp;
-import org.slf4j.Logger;
+import org.embeddedt.tinkerleveling.capability.DamageXp;
+import org.embeddedt.tinkerleveling.capability.SimplePersistentCapabilityProvider;
 import slimeknights.tconstruct.common.TinkerTags;
-import slimeknights.tconstruct.library.modifiers.util.ModifierDeferredRegister;
-import slimeknights.tconstruct.library.modifiers.util.StaticModifier;
+import slimeknights.tconstruct.library.modifiers.Modifier;
 import slimeknights.tconstruct.library.tools.helper.ModifierUtil;
-import slimeknights.tconstruct.library.tools.item.ModifiableItem;
 import slimeknights.tconstruct.library.tools.nbt.ToolStack;
 
 // The value here should match an entry in the META-INF/mods.toml file
@@ -37,10 +37,10 @@ public class TinkerLeveling {
     public static final String MODID = "tinkerleveling";
 
     // Directly reference a slf4j logger
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = LogManager.getLogger();
 
-    protected static final ModifierDeferredRegister MODIFIERS = ModifierDeferredRegister.create(TinkerLeveling.MODID);
-    public static StaticModifier<ModToolLeveling> LEVELING_MODIFIER = MODIFIERS.register("leveling", ModToolLeveling::new);
+    protected static final DeferredRegister<Modifier> MODIFIERS = DeferredRegister.create(Modifier.class, TinkerLeveling.MODID);
+    public static RegistryObject<ModToolLeveling> LEVELING_MODIFIER = MODIFIERS.register("leveling", ModToolLeveling::new);
 
     public static TinkerLeveling instance;
 
@@ -51,26 +51,28 @@ public class TinkerLeveling {
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::registerModifiers);
         ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, TinkerConfig.SERVER_CONFIG);
         TinkerPacketHandler.register();
+        MODIFIERS.register(FMLJavaModLoadingContext.get().getModEventBus());
 
         instance = this;
     }
 
     public void registerModifiers(final FMLCommonSetupEvent event) {
-        MODIFIERS.register(FMLJavaModLoadingContext.get().getModEventBus());
+        CapabilityDamageXp.register();
     }
 
     private static final ResourceLocation CAPABILITY_KEY = new ResourceLocation(TinkerLeveling.MODID, "entityxp");
 
     @SubscribeEvent
     public void attachEntityDamageCap(AttachCapabilitiesEvent<Entity> event) {
+        DamageXp damageXp = new DamageXp();
         if(event.getObject() instanceof LivingEntity && event.getObject().isAlive()) {
-            event.addCapability(CAPABILITY_KEY, new CapabilityDamageXp());
+            event.addCapability(CAPABILITY_KEY, SimplePersistentCapabilityProvider.from(CapabilityDamageXp.CAPABILITY, () -> damageXp));
         }
     }
 
     @SubscribeEvent
     public void onDeath(LivingDeathEvent event) {
-        if(!event.getEntity().getLevel().isClientSide) {
+        if(!event.getEntity().level.isClientSide) {
             event.getEntity().getCapability(CapabilityDamageXp.CAPABILITY, null).ifPresent(cap -> {
                 cap.distributeXpToTools(event.getEntityLiving());
             });
@@ -79,10 +81,10 @@ public class TinkerLeveling {
 
     private void processInvList(NonNullList<ItemStack> items) {
         for(ItemStack itemStack : items) {
-            if(itemStack.is(TinkerTags.Items.MODIFIABLE)) {
-                if(ModifierUtil.getModifierLevel(itemStack, LEVELING_MODIFIER.getId()) == 0) {
+            if(itemStack.getItem().is(TinkerTags.Items.MODIFIABLE)) {
+                if(ModifierUtil.getModifierLevel(itemStack, LEVELING_MODIFIER.get()) == 0) {
                     ToolStack tool = ToolStack.from(itemStack);
-                    tool.addModifier(LEVELING_MODIFIER.getId(), 1);
+                    tool.addModifier(LEVELING_MODIFIER.get(), 1);
                 }
             }
         }
@@ -91,8 +93,8 @@ public class TinkerLeveling {
     @SubscribeEvent
     public void onPlayerTick(TickEvent.PlayerTickEvent event) {
         /* TODO: replace with tool building event if/when Tinkers adds one */
-        if(!event.player.getLevel().isClientSide) {
-            Inventory inventory = event.player.getInventory();
+        if(!event.player.level.isClientSide) {
+            PlayerInventory inventory = event.player.inventory;
             processInvList(inventory.items);
             processInvList(inventory.armor);
             processInvList(inventory.offhand);

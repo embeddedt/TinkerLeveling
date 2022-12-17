@@ -1,28 +1,28 @@
 package org.embeddedt.tinkerleveling;
 
-import net.minecraft.ChatFormatting;
-import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.resources.language.I18n;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TranslatableComponent;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.client.resources.I18n;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.util.Util;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TextFormatting;
+import net.minecraft.util.text.TranslationTextComponent;
 
 public class ClientHelper {
 
-    public static void playLevelupDing(Player player) {
+    public static void playLevelupDing(PlayerEntity player) {
 
     }
 
     public static void sendLevelUpMessage(int level) {
-        Component textComponent;
+        ITextComponent textComponent;
         // special message
         if(I18n.exists("message.levelup." + level)) {
-            textComponent = new TranslatableComponent("message.levelup." + level, "tool").withStyle(style -> style.withColor(ChatFormatting.DARK_AQUA));
+            textComponent = new TranslationTextComponent("message.levelup." + level, "tool").withStyle(style -> style.withColor(TextFormatting.DARK_AQUA));
         }
         // generic message
         else {
-            textComponent = new TranslatableComponent("message.levelup.generic", "tool").append(ClientEvents.getLevelString(level));
+            textComponent = new TranslationTextComponent("message.levelup.generic", "tool").append(ClientEvents.getLevelString(level));
         }
         Minecraft.getInstance().player.sendMessage(textComponent, Util.NIL_UUID);
     }

@@ -1,19 +1,18 @@
 package org.embeddedt.tinkerleveling;
 
-import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.NbtUtils;
-import net.minecraft.nbt.Tag;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.InteractionResult;
-import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.context.UseOnContext;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.block.BlockState;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.inventory.EquipmentSlotType;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemUseContext;
+import net.minecraft.nbt.NBTUtil;
+import net.minecraft.util.DamageSource;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.server.ServerWorld;
+import net.minecraftforge.common.util.Constants;
 import org.embeddedt.tinkerleveling.capability.CapabilityDamageXp;
 import slimeknights.tconstruct.common.SoundUtils;
 import slimeknights.tconstruct.library.modifiers.Modifier;
@@ -24,12 +23,11 @@ import slimeknights.tconstruct.library.tools.context.EquipmentContext;
 import slimeknights.tconstruct.library.tools.context.ToolAttackContext;
 import slimeknights.tconstruct.library.tools.context.ToolHarvestContext;
 import slimeknights.tconstruct.library.tools.context.ToolRebuildContext;
-import slimeknights.tconstruct.library.tools.nbt.IModDataView;
-import slimeknights.tconstruct.library.tools.nbt.IToolStackView;
+import slimeknights.tconstruct.library.tools.nbt.IModDataReadOnly;
+import slimeknights.tconstruct.library.tools.nbt.IModifierToolStack;
 import slimeknights.tconstruct.library.tools.nbt.ModDataNBT;
 import slimeknights.tconstruct.library.tools.nbt.ToolStack;
 import slimeknights.tconstruct.library.utils.RestrictedCompoundTag;
-import slimeknights.tconstruct.tools.ToolDefinitions;
 
 import javax.annotation.Nullable;
 import java.util.UUID;
@@ -47,13 +45,13 @@ public class ModToolLeveling extends Modifier implements IHarvestModifier, IShea
     }
 
     public ModToolLeveling() {
-        super();
+        super(0xffffff);
     }
 
 
     @Override
     public void addVolatileData(ToolRebuildContext context, int level, ModDataNBT volatileData) {
-        IModDataView persistentData = context.getPersistentData();
+        IModDataReadOnly persistentData = context.getPersistentData();
         int numExtraModifiers = persistentData.getInt(BONUS_MODIFIERS_KEY);
         int numAbilitySlots = (numExtraModifiers / 2);
         volatileData.addSlots(SlotType.ABILITY, numAbilitySlots);
@@ -61,7 +59,7 @@ public class ModToolLeveling extends Modifier implements IHarvestModifier, IShea
     }
 
     @Override
-    public void onRemoved(IToolStackView tool) {
+    public void onRemoved(IModifierToolStack tool) {
         tool.getPersistentData().remove(XP_KEY);
         tool.getPersistentData().remove(BONUS_MODIFIERS_KEY);
         tool.getPersistentData().remove(LEVEL_KEY);
@@ -69,9 +67,9 @@ public class ModToolLeveling extends Modifier implements IHarvestModifier, IShea
     }
 
     @Override
-    public void addRawData(IToolStackView tool, int level, RestrictedCompoundTag tag) {
-        if(!tool.getPersistentData().contains(UUID_KEY, Tag.TAG_INT_ARRAY)) {
-            tool.getPersistentData().put(UUID_KEY, NbtUtils.createUUID(UUID.randomUUID()));
+    public void addRawData(IModifierToolStack tool, int level, RestrictedCompoundTag tag) {
+        if(!tool.getPersistentData().contains(UUID_KEY, Constants.NBT.TAG_INT_ARRAY)) {
+            tool.getPersistentData().put(UUID_KEY, NBTUtil.createUUID(UUID.randomUUID()));
         }
         if(tool.getPersistentData().getInt(LEVEL_KEY) <= 0) {
             tool.getPersistentData().putInt(LEVEL_KEY, 1);
@@ -85,7 +83,7 @@ public class ModToolLeveling extends Modifier implements IHarvestModifier, IShea
         return (int) ((double) getXpForLevelup(level - 1, item) * TinkerConfig.levelMultiplier.get());
     }
 
-    public void addXp(IToolStackView tool, int amount, Player player) {
+    public void addXp(IModifierToolStack tool, int amount, PlayerEntity player) {
         ModDataNBT levelData = tool.getPersistentData();
 
         // is max level?
@@ -107,7 +105,7 @@ public class ModToolLeveling extends Modifier implements IHarvestModifier, IShea
         }
 
         if(leveledUp) {
-            if(!player.getLevel().isClientSide) {
+            if(!player.level.isClientSide) {
                 SoundUtils.playSoundForPlayer(player, TinkerLeveling.SOUND_LEVELUP, 1f, 1f);
                 TinkerPacketHandler.sendLevelUp(levelData.getInt(LEVEL_KEY), player);
             }
@@ -133,38 +131,39 @@ public class ModToolLeveling extends Modifier implements IHarvestModifier, IShea
     /* Handlers */
 
     @Override
-    public void afterBlockBreak(IToolStackView tool, int level, ToolHarvestContext context) {
+    public void afterBlockBreak(IModifierToolStack tool, int level, ToolHarvestContext context) {
         if(context.isEffective() && context.getPlayer() != null) {
             addXp(tool, 1, context.getPlayer());
         }
     }
 
     @Override
-    public void onAttacked(IToolStackView tool, int level, EquipmentContext context, EquipmentSlot slotType, DamageSource source, float amount, boolean isDirectDamage) {
-        if(!(context.getEntity() instanceof Player player))
+    public void onAttacked(IModifierToolStack tool, int level, EquipmentContext context, EquipmentSlotType slotType, DamageSource source, float amount, boolean isDirectDamage) {
+        if(!(context.getEntity() instanceof PlayerEntity))
             return;
+        PlayerEntity player = (PlayerEntity) context.getEntity();
         boolean wasMobDamage = source.getEntity() != player && source.getEntity() instanceof LivingEntity;
         if(isDirectDamage
                 && (wasMobDamage || TinkerConfig.allowArmorExploits.get())
-                && slotType.getType() == EquipmentSlot.Type.ARMOR /* only level armor */
-                && !player.getLevel().isClientSide) {
+                && slotType.getType() == EquipmentSlotType.Group.ARMOR /* only level armor */
+                && !player.level.isClientSide) {
             addXp(tool, 1, player);
         }
     }
 
     @Override
-    public int afterEntityHit(IToolStackView tool, int level, ToolAttackContext context, float damageDealt) {
+    public int afterEntityHit(IModifierToolStack tool, int level, ToolAttackContext context, float damageDealt) {
         LivingEntity target = context.getLivingTarget();
         if(target == null)
             return 0;
-        if(!context.getTarget().getLevel().isClientSide && context.getPlayerAttacker() != null) {
+        if(!context.getTarget().level.isClientSide && context.getPlayerAttacker() != null) {
             // if we killed it the event for distributing xp was already fired and we just do it manually here
             if(!context.getTarget().isAlive()) {
                 addXp(tool, Math.round(damageDealt), context.getPlayerAttacker());
             }
             else {
                 target.getCapability(CapabilityDamageXp.CAPABILITY, null).ifPresent(cap -> {
-                    cap.addDamageFromTool(damageDealt, NbtUtils.loadUUID(tool.getPersistentData().get(UUID_KEY)), context.getPlayerAttacker());
+                    cap.addDamageFromTool(damageDealt, NBTUtil.loadUUID(tool.getPersistentData().get(UUID_KEY)), context.getPlayerAttacker());
                 });
             }
         }
@@ -172,13 +171,13 @@ public class ModToolLeveling extends Modifier implements IHarvestModifier, IShea
     }
 
     @Override
-    public void afterHarvest(IToolStackView tool, int level, UseOnContext context, ServerLevel world, BlockState state, BlockPos pos) {
+    public void afterHarvest(IModifierToolStack tool, int level, ItemUseContext context, ServerWorld world, BlockState state, BlockPos pos) {
         if(context.getPlayer() != null)
             addXp(tool, 1, context.getPlayer());
     }
 
     @Override
-    public void afterShearEntity(IToolStackView tool, int level, Player player, Entity entity, boolean isTarget) {
+    public void afterShearEntity(IModifierToolStack tool, int level, PlayerEntity player, Entity entity, boolean isTarget) {
         addXp(tool, 1, player);
     }
 }

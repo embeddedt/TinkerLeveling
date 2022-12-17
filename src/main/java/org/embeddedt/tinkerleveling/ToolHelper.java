@@ -1,6 +1,6 @@
 package org.embeddedt.tinkerleveling;
 
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.item.ItemStack;
 import slimeknights.tconstruct.library.tools.nbt.ToolStack;
 
 public class ToolHelper {

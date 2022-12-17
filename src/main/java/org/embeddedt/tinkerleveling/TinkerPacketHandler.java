@@ -1,16 +1,15 @@
 package org.embeddedt.tinkerleveling;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.network.PacketBuffer;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.network.NetworkEvent;
-import net.minecraftforge.network.NetworkRegistry;
-import net.minecraftforge.network.PacketDistributor;
-import net.minecraftforge.network.simple.SimpleChannel;
+import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraftforge.fml.network.NetworkRegistry;
+import net.minecraftforge.fml.network.PacketDistributor;
+import net.minecraftforge.fml.network.simple.SimpleChannel;
 
 import java.util.function.Supplier;
 
@@ -28,19 +27,19 @@ public class TinkerPacketHandler {
         INSTANCE.registerMessage(id++, LevelUpMessage.class, LevelUpMessage::encode, LevelUpMessage::decode, LevelUpMessage::handle);
     }
 
-    public static void sendLevelUp(int level, Player player) {
+    public static void sendLevelUp(int level, PlayerEntity player) {
         LevelUpMessage msg = new LevelUpMessage();
         msg.level = level;
-        INSTANCE.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer)player), msg);
+        INSTANCE.send(PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) player), msg);
     }
 
     static class LevelUpMessage {
         int level;
-        void encode(FriendlyByteBuf buf) {
+        void encode(PacketBuffer buf) {
             buf.writeInt(level);
         }
 
-        static LevelUpMessage decode(FriendlyByteBuf buf) {
+        static LevelUpMessage decode(PacketBuffer buf) {
             int level = buf.readInt();
             LevelUpMessage msg = new LevelUpMessage();
             msg.level = level;

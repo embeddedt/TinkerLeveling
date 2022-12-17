@@ -1,14 +1,16 @@
 package org.embeddedt.tinkerleveling.capability;
 
-import net.minecraft.nbt.*;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.ListNBT;
+import net.minecraft.nbt.NBTUtil;
+import net.minecraft.world.World;
+import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.items.CapabilityItemHandler;
 import org.embeddedt.tinkerleveling.ModToolLeveling;
 import org.embeddedt.tinkerleveling.TinkerLeveling;
-import org.embeddedt.tinkerleveling.ToolHelper;
 import slimeknights.tconstruct.library.tools.item.IModifiable;
 import slimeknights.tconstruct.library.tools.nbt.ToolStack;
 
@@ -26,7 +28,7 @@ public class DamageXp implements IDamageXp {
     private Map<UUID, Map<UUID, Float>> playerToDamageMap = new HashMap<>();
 
     @Override
-    public void addDamageFromTool(float damage, UUID tool, Player player) {
+    public void addDamageFromTool(float damage, UUID tool, PlayerEntity player) {
         Map<UUID, Float> damageMap = playerToDamageMap.getOrDefault(player.getUUID(), new HashMap<>());
 
         damage += getDamageDealtByTool(tool, player);
@@ -36,7 +38,7 @@ public class DamageXp implements IDamageXp {
     }
 
     @Override
-    public float getDamageDealtByTool(UUID tool, Player player) {
+    public float getDamageDealtByTool(UUID tool, PlayerEntity player) {
         Map<UUID, Float> damageMap = playerToDamageMap.getOrDefault(player.getUUID(), new HashMap<>());
 
         return damageMap.entrySet().stream()
@@ -48,10 +50,10 @@ public class DamageXp implements IDamageXp {
 
     @Override
     public void distributeXpToTools(LivingEntity deadEntity) {
-        playerToDamageMap.forEach((uuid, itemStackFloatMap) -> distributeXpForPlayer(deadEntity.getLevel(), uuid, itemStackFloatMap));
+        playerToDamageMap.forEach((uuid, itemStackFloatMap) -> distributeXpForPlayer(deadEntity.level, uuid, itemStackFloatMap));
     }
 
-    private void distributeXpForPlayer(Level world, UUID playerUuid, Map<UUID, Float> damageMap) {
+    private void distributeXpForPlayer(World world, UUID playerUuid, Map<UUID, Float> damageMap) {
         Optional.ofNullable(world.getPlayerByUUID(playerUuid))
                 .ifPresent(
                         player -> damageMap.forEach(
@@ -60,7 +62,7 @@ public class DamageXp implements IDamageXp {
                 );
     }
 
-    private void distributeXpToPlayerForTool(Player player, UUID toolUUID, float damage) {
+    private void distributeXpToPlayerForTool(PlayerEntity player, UUID toolUUID, float damage) {
         if(toolUUID != null) {
             player.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null).ifPresent(itemHandler -> {
                 // check for identity. should work in most cases because the entity was killed without loading/unloading
@@ -68,8 +70,8 @@ public class DamageXp implements IDamageXp {
                     ItemStack stack = itemHandler.getStackInSlot(i);
                     if(stack.getItem() instanceof IModifiable) {
                         ToolStack tool = ToolStack.from(stack);
-                        if(tool.getPersistentData().contains(ModToolLeveling.UUID_KEY, Tag.TAG_INT_ARRAY)) {
-                            if(NbtUtils.loadUUID(tool.getPersistentData().get(ModToolLeveling.UUID_KEY)).equals(toolUUID)) {
+                        if(tool.getPersistentData().contains(ModToolLeveling.UUID_KEY, Constants.NBT.TAG_INT_ARRAY)) {
+                            if(NBTUtil.loadUUID(tool.getPersistentData().get(ModToolLeveling.UUID_KEY)).equals(toolUUID)) {
                                 TinkerLeveling.LEVELING_MODIFIER.get().addXp(tool, Math.round(damage), player);
                                 return;
                             }
@@ -81,19 +83,19 @@ public class DamageXp implements IDamageXp {
     }
 
     @Override
-    public ListTag serializeNBT() {
-        ListTag playerList = new ListTag();
+    public ListNBT serializeNBT() {
+        ListNBT playerList = new ListNBT();
 
         playerToDamageMap.forEach((uuid, itemStackFloatMap) -> playerList.add(convertPlayerDataToTag(uuid, itemStackFloatMap)));
 
         return playerList;
     }
 
-    private CompoundTag convertPlayerDataToTag(UUID uuid, Map<UUID, Float> itemStackFloatMap) {
-        CompoundTag tag = new CompoundTag();
+    private CompoundNBT convertPlayerDataToTag(UUID uuid, Map<UUID, Float> itemStackFloatMap) {
+        CompoundNBT tag = new CompoundNBT();
         tag.putUUID(TAG_PLAYER_UUID, uuid);
 
-        ListTag damageTag = new ListTag();
+        ListNBT damageTag = new ListNBT();
 
         itemStackFloatMap.forEach((itemStack, damage) -> damageTag.add(convertItemDamageDataToTag(itemStack, damage)));
 
@@ -101,10 +103,10 @@ public class DamageXp implements IDamageXp {
         return tag;
     }
 
-    private CompoundTag convertItemDamageDataToTag(UUID stack, Float damage) {
-        CompoundTag tag = new CompoundTag();
+    private CompoundNBT convertItemDamageDataToTag(UUID stack, Float damage) {
+        CompoundNBT tag = new CompoundNBT();
 
-        tag.put(TAG_ITEM, NbtUtils.createUUID(stack));
+        tag.put(TAG_ITEM, NBTUtil.createUUID(stack));
         tag.putFloat(TAG_DAMAGE, damage);
 
         return tag;
@@ -112,13 +114,13 @@ public class DamageXp implements IDamageXp {
 
 
     @Override
-    public void deserializeNBT(ListTag nbt) {
+    public void deserializeNBT(ListNBT nbt) {
         playerToDamageMap = new HashMap<>();
         for(int i = 0; i < nbt.size(); i++) {
-            CompoundTag tag = nbt.getCompound(i);
+            CompoundNBT tag = nbt.getCompound(i);
 
             UUID playerUuid = tag.getUUID(TAG_PLAYER_UUID);
-            ListTag data = tag.getList(TAG_DAMAGE_LIST, 10);
+            ListNBT data = tag.getList(TAG_DAMAGE_LIST, 10);
 
             Map<UUID, Float> damageMap = new HashMap<>();
 
@@ -130,8 +132,8 @@ public class DamageXp implements IDamageXp {
         }
     }
 
-    private void deserializeTagToMapEntry(Map<UUID, Float> damageMap, CompoundTag tag) {
-        UUID stack = NbtUtils.loadUUID(tag.get(TAG_ITEM));
+    private void deserializeTagToMapEntry(Map<UUID, Float> damageMap, CompoundNBT tag) {
+        UUID stack = NBTUtil.loadUUID(tag.get(TAG_ITEM));
         damageMap.put(stack, tag.getFloat(TAG_DAMAGE));
     }
 }
