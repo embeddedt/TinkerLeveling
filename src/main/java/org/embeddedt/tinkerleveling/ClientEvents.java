@@ -10,6 +10,8 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import slimeknights.tconstruct.common.TinkerTags;
+import slimeknights.tconstruct.library.tools.helper.ModifierUtil;
 import slimeknights.tconstruct.library.tools.nbt.ModDataNBT;
 import slimeknights.tconstruct.library.tools.nbt.ToolStack;
 
@@ -20,9 +22,11 @@ public class ClientEvents {
     @SubscribeEvent
     static void onTooltipEvent(ItemTooltipEvent event) {
         ItemStack stack = event.getItemStack();
-        List<ITextComponent> tooltips = event.getToolTip();
-        ToolStack tool = ToolStack.from(stack);
-        if(tool.getModifierLevel(TinkerLeveling.LEVELING_MODIFIER.get()) > 0) {
+        if(!stack.is(TinkerTags.Items.MODIFIABLE))
+            return;
+        List<Component> tooltips = event.getToolTip();
+        ToolStack tool = ToolStack.copyFrom(stack);
+        if(tool.getModifierLevel(TinkerLeveling.LEVELING_MODIFIER.getId()) > 0) {
             ModDataNBT levelData = tool.getPersistentData();
             int xp = levelData.getInt(ModToolLeveling.XP_KEY);
             int level = levelData.getInt(ModToolLeveling.LEVEL_KEY);
