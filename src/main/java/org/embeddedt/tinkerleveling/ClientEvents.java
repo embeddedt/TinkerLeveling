@@ -1,5 +1,6 @@
 package org.embeddedt.tinkerleveling;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.text.Color;
@@ -20,6 +21,8 @@ import java.util.List;
 public class ClientEvents {
     @SubscribeEvent
     static void onTooltipEvent(ItemTooltipEvent event) {
+        if(Minecraft.getInstance().level == null)
+            return;
         ItemStack stack = event.getItemStack();
         if(!stack.getItem().is(TinkerTags.Items.MODIFIABLE))
             return;
