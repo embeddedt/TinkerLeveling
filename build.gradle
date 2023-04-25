@@ -5,7 +5,7 @@ plugins {
 
 
 group = 'org.embeddedt'
-version = '0.3.0'
+version = '0.3.1'
 
 java {
     archivesBaseName = 'tinkerleveling' + "-mc" + "${minecraft_version}"
