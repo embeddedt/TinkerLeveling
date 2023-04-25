@@ -195,7 +195,7 @@ curseforge {
             id = "666778"
             changelog = 'https://github.com/embeddedt/TinkerLeveling/commits/1.16'
             changelogType = "markdown"
-            releaseType = "beta"
+            releaseType = "release"
             addGameVersion "Forge"
             addGameVersion "1.16.5"
 
