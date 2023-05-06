@@ -50,7 +50,7 @@ minecraft {
             // Recommended logging level for the console
             // You can set various levels here.
             // Please read: https://stackoverflow.com/questions/2031163/when-to-use-the-different-log-levels
-            property 'forge.logging.console.level', 'debug'
+            property 'forge.logging.console.level', 'info'
 
             // Comma-separated list of namespaces to load gametests from. Empty = all namespaces.
             property 'forge.enabledGameTestNamespaces', 'tinkerleveling'
@@ -142,12 +142,13 @@ dependencies {
     // Specify the version of Minecraft to use. If this is any group other than 'net.minecraft' it is assumed
     // that the dep is a ForgeGradle 'patcher' dependency, and its patches will be applied.
     // The userdev artifact is a special name and will get all sorts of transformations applied to it.
-    minecraft 'net.minecraftforge:forge:1.18.2-40.1.74'
+    minecraft 'net.minecraftforge:forge:1.18.2-40.2.1'
 
-    implementation fg.deobf("slimeknights.mantle:Mantle:1.18.2-1.9.28")
-    implementation fg.deobf("slimeknights.tconstruct:TConstruct:1.18.2-3.5.1.35")
+    implementation fg.deobf("slimeknights.mantle:Mantle:1.18.2-1.9.45")
+    implementation fg.deobf("slimeknights.tconstruct:TConstruct:1.18.2-3.6.4.113")
 
     runtimeOnly fg.deobf("curse.maven:lazydfu-460819:3544496")
+    runtimeOnly fg.deobf("curse.maven:modernfix-790626:4523554")
 
     // Real mod deobf dependency examples - these get remapped to your current mappings
     // compileOnly fg.deobf("mezz.jei:jei-${mc_version}:${jei_version}:api") // Adds JEI API as a compile dependency
