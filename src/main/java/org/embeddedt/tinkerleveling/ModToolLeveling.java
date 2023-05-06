@@ -16,6 +16,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.phys.EntityHitResult;
+import net.minecraftforge.common.MinecraftForge;
 import org.embeddedt.tinkerleveling.capability.CapabilityDamageXp;
 import slimeknights.tconstruct.common.SoundUtils;
 import slimeknights.tconstruct.library.modifiers.Modifier;
@@ -30,10 +31,12 @@ import slimeknights.tconstruct.library.tools.context.EquipmentContext;
 import slimeknights.tconstruct.library.tools.context.ToolAttackContext;
 import slimeknights.tconstruct.library.tools.context.ToolHarvestContext;
 import slimeknights.tconstruct.library.tools.context.ToolRebuildContext;
+import slimeknights.tconstruct.library.tools.helper.ModifierUtil;
 import slimeknights.tconstruct.library.tools.item.ModifiableLauncherItem;
 import slimeknights.tconstruct.library.tools.nbt.*;
 import slimeknights.tconstruct.library.tools.stat.ToolStats;
 import slimeknights.tconstruct.library.utils.RestrictedCompoundTag;
+import slimeknights.tconstruct.tools.TinkerModifiers;
 
 import javax.annotation.Nullable;
 import java.util.UUID;
@@ -56,6 +59,7 @@ public class ModToolLeveling extends Modifier implements HarvestEnchantmentsModi
 
     public ModToolLeveling() {
         super();
+        MinecraftForge.EVENT_BUS.register(this);
     }
 
 
@@ -152,9 +156,16 @@ public class ModToolLeveling extends Modifier implements HarvestEnchantmentsModi
         if(!(context.getEntity() instanceof Player player))
             return;
         boolean wasMobDamage = source.getEntity() != player && source.getEntity() instanceof LivingEntity;
+        ModifierEntry blockingModifier = tool.getModifiers().getEntry(TinkerModifiers.blocking.getId());
+        boolean isLevelableItem;
+        if(slotType.getType() == EquipmentSlot.Type.ARMOR && (wasMobDamage || TinkerConfig.allowArmorExploits.get()))
+            isLevelableItem = true;
+        else if(player.isBlocking() && blockingModifier != null && ModifierUtil.getActiveModifier(tool) == blockingModifier)
+            isLevelableItem = true;
+        else
+            isLevelableItem = false;
         if(isDirectDamage
-                && (wasMobDamage || TinkerConfig.allowArmorExploits.get())
-                && slotType.getType() == EquipmentSlot.Type.ARMOR /* only level armor */
+                && isLevelableItem
                 && !player.getLevel().isClientSide) {
             addXp(tool, 1, player);
         }
