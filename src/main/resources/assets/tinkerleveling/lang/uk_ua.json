@@ -1,0 +1,33 @@
+{
+  "tooltip.tinkerleveling.level": "Рівень",
+  "tooltip.tinkerleveling.xp": "XP",
+
+  "tooltip.tinkerleveling.level.0": "Немов немовля",
+  "tooltip.tinkerleveling.level.1": "Незграбний",
+  "tooltip.tinkerleveling.level.2": "Зручний",
+  "tooltip.tinkerleveling.level.3": "Звичний",
+  "tooltip.tinkerleveling.level.4": "Досвідченний",
+  "tooltip.tinkerleveling.level.5": "Експерт",
+  "tooltip.tinkerleveling.level.6": "Мастер",
+  "tooltip.tinkerleveling.level.7": "Грандмастер",
+  "tooltip.tinkerleveling.level.8": "Героічний",
+  "tooltip.tinkerleveling.level.9": "Легендарний",
+  "tooltip.tinkerleveling.level.10": "Богоподібний",
+  "tooltip.tinkerleveling.level.11": "Неймовірний",
+  "tooltip.tinkerleveling.level.19": "MoxieGrrl",
+  "tooltip.tinkerleveling.level.42": "boni",
+  "tooltip.tinkerleveling.level.66": "Jadedcat",
+  "tooltip.tinkerleveling.level.99": "Хакер",
+
+  "message.levelup.2": "Вам стає зручніше користуватись %s",
+  "message.levelup.3": "Ви звикаєте до ваги %s",
+  "message.levelup.4": "Ви стали досвідченним у використанні %s",
+  "message.levelup.5": "Ви стали експертом у використанні %s!",
+  "message.levelup.6": "Ви досягли рівня мастера у використанні %s!",
+  "message.levelup.7": "Ви досягли рівня грандмастера у використанні %s!",
+  "message.levelup.8": "Ви відчуваєте що ви і ваш %s спроможні на великі звершення!",
+  "message.levelup.9": "Ви і ваш %s стали живими легендами!",
+  "message.levelup.10": "Жоден бог не спроможен стати на шляху перед вами і вашим %s!",
+  "message.levelup.11": "Ваш %s - це чиста неймовірність.",
+  "message.levelup.generic": "Ваш %s досяг рівня "
+}
