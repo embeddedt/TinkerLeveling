@@ -6,6 +6,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -214,11 +215,16 @@ public class ModToolLeveling extends Modifier implements BlockBreakModifierHook,
     public void onProjectileLaunch(IToolStackView iToolStackView, ModifierEntry modifierEntry, LivingEntity livingEntity, Projectile projectile, @org.jetbrains.annotations.Nullable AbstractArrow abstractArrow, NamespacedNBT namespacedNBT, boolean b) {
         if(livingEntity instanceof Player player) {
             ItemStack stack = player.getUseItem();
-            if(stack.getItem() instanceof ModifiableLauncherItem) {
+            if(stack.isEmpty()) {
+                ItemStack mainHandStack = player.getItemInHand(InteractionHand.MAIN_HAND);
+                ItemStack offHandStack = player.getItemInHand(InteractionHand.OFF_HAND);
+                stack = mainHandStack.getItem() == iToolStackView.getItem() ? mainHandStack : offHandStack;
+            }
+            if(stack.getItem() == iToolStackView.getItem() && stack.getItem() instanceof ModifiableLauncherItem) {
                 float drawspeed = ConditionalStatModifierHook.getModifiedStat(iToolStackView, player, ToolStats.DRAW_SPEED) / 20.0f;
                 int totalDrawTime = player.getTicksUsingItem();
                 int fullDrawTime = (int)Math.ceil(1.0f / drawspeed);
-                if(totalDrawTime >= fullDrawTime) {
+                if((abstractArrow != null && abstractArrow.shotFromCrossbow()) || totalDrawTime >= fullDrawTime) {
                     synchronized (LAUNCH_INFO_MAP) {
                         LAUNCH_INFO_MAP.put(projectile, Pair.of(stack, fullDrawTime));
                     }
