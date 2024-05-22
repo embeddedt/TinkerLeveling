@@ -8,10 +8,8 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.Block;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
-import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -19,15 +17,15 @@ import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.RegisterEvent;
 import org.embeddedt.tinkerleveling.capability.CapabilityDamageXp;
 import org.slf4j.Logger;
 import slimeknights.tconstruct.common.TinkerTags;
 import slimeknights.tconstruct.library.modifiers.util.ModifierDeferredRegister;
 import slimeknights.tconstruct.library.modifiers.util.StaticModifier;
 import slimeknights.tconstruct.library.tools.helper.ModifierUtil;
-import slimeknights.tconstruct.library.tools.item.ModifiableItem;
 import slimeknights.tconstruct.library.tools.nbt.ToolStack;
 
 // The value here should match an entry in the META-INF/mods.toml file
@@ -72,7 +70,7 @@ public class TinkerLeveling {
     public void onDeath(LivingDeathEvent event) {
         if(!event.getEntity().getLevel().isClientSide) {
             event.getEntity().getCapability(CapabilityDamageXp.CAPABILITY, null).ifPresent(cap -> {
-                cap.distributeXpToTools(event.getEntityLiving());
+                cap.distributeXpToTools(event.getEntity());
             });
         }
     }
@@ -99,17 +97,13 @@ public class TinkerLeveling {
         }
     }
 
-    public static SoundEvent SOUND_LEVELUP = sound("levelup");
-
-    private static SoundEvent sound(String name) {
-        ResourceLocation location = new ResourceLocation(TinkerLeveling.MODID, name);
-        SoundEvent event = new SoundEvent(location);
-        event.setRegistryName(location);
-        return event;
-    }
+    public static ResourceLocation SOUND_LEVELUP_LOCATION = new ResourceLocation(TinkerLeveling.MODID, "levelup");
+    public static SoundEvent SOUND_LEVELUP = new SoundEvent(SOUND_LEVELUP_LOCATION);
 
     @SubscribeEvent
-    public static void registerSoundEvent(RegistryEvent.Register<SoundEvent> event) {
-        event.getRegistry().register(SOUND_LEVELUP);
+    public static void registerSoundEvent(RegisterEvent event) {
+        event.register(ForgeRegistries.Keys.SOUND_EVENTS, helper -> {
+            helper.register(SOUND_LEVELUP_LOCATION, SOUND_LEVELUP);
+        });
     }
 }

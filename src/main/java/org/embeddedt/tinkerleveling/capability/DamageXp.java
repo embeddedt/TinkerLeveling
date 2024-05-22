@@ -5,10 +5,9 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.items.CapabilityItemHandler;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import org.embeddedt.tinkerleveling.ModToolLeveling;
 import org.embeddedt.tinkerleveling.TinkerLeveling;
-import org.embeddedt.tinkerleveling.ToolHelper;
 import slimeknights.tconstruct.library.tools.item.IModifiable;
 import slimeknights.tconstruct.library.tools.nbt.ToolStack;
 
@@ -62,7 +61,7 @@ public class DamageXp implements IDamageXp {
 
     private void distributeXpToPlayerForTool(Player player, UUID toolUUID, float damage) {
         if(toolUUID != null) {
-            player.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null).ifPresent(itemHandler -> {
+            player.getCapability(ForgeCapabilities.ITEM_HANDLER, null).ifPresent(itemHandler -> {
                 // check for identity. should work in most cases because the entity was killed without loading/unloading
                 for(int i = 0; i < itemHandler.getSlots(); i++) {
                     ItemStack stack = itemHandler.getStackInSlot(i);

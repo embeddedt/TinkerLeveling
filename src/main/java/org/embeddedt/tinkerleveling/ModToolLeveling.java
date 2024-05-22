@@ -3,6 +3,7 @@ package org.embeddedt.tinkerleveling;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
@@ -21,29 +22,36 @@ import org.embeddedt.tinkerleveling.capability.CapabilityDamageXp;
 import slimeknights.tconstruct.common.SoundUtils;
 import slimeknights.tconstruct.library.modifiers.Modifier;
 import slimeknights.tconstruct.library.modifiers.ModifierEntry;
-import slimeknights.tconstruct.library.modifiers.TinkerHooks;
-import slimeknights.tconstruct.library.modifiers.hook.*;
-import slimeknights.tconstruct.library.modifiers.hooks.IHarvestModifier;
-import slimeknights.tconstruct.library.modifiers.hooks.IShearModifier;
-import slimeknights.tconstruct.library.modifiers.util.ModifierHookMap;
+import slimeknights.tconstruct.library.modifiers.ModifierHooks;
+import slimeknights.tconstruct.library.modifiers.hook.armor.OnAttackedModifierHook;
+import slimeknights.tconstruct.library.modifiers.hook.build.ConditionalStatModifierHook;
+import slimeknights.tconstruct.library.modifiers.hook.build.ModifierRemovalHook;
+import slimeknights.tconstruct.library.modifiers.hook.build.RawDataModifierHook;
+import slimeknights.tconstruct.library.modifiers.hook.build.VolatileDataModifierHook;
+import slimeknights.tconstruct.library.modifiers.hook.combat.MeleeHitModifierHook;
+import slimeknights.tconstruct.library.modifiers.hook.interaction.GeneralInteractionModifierHook;
+import slimeknights.tconstruct.library.modifiers.hook.mining.BlockBreakModifierHook;
+import slimeknights.tconstruct.library.modifiers.hook.mining.HarvestEnchantmentsModifierHook;
+import slimeknights.tconstruct.library.modifiers.hook.ranged.ProjectileHitModifierHook;
+import slimeknights.tconstruct.library.modifiers.hook.ranged.ProjectileLaunchModifierHook;
+import slimeknights.tconstruct.library.modifiers.hook.special.ShearsModifierHook;
+import slimeknights.tconstruct.library.module.ModuleHook;
+import slimeknights.tconstruct.library.module.ModuleHookMap;
 import slimeknights.tconstruct.library.tools.SlotType;
 import slimeknights.tconstruct.library.tools.context.EquipmentContext;
 import slimeknights.tconstruct.library.tools.context.ToolAttackContext;
 import slimeknights.tconstruct.library.tools.context.ToolHarvestContext;
-import slimeknights.tconstruct.library.tools.context.ToolRebuildContext;
-import slimeknights.tconstruct.library.tools.helper.ModifierUtil;
-import slimeknights.tconstruct.library.tools.item.ModifiableLauncherItem;
+import slimeknights.tconstruct.library.tools.item.ranged.ModifiableLauncherItem;
 import slimeknights.tconstruct.library.tools.nbt.*;
 import slimeknights.tconstruct.library.tools.stat.ToolStats;
 import slimeknights.tconstruct.library.utils.RestrictedCompoundTag;
 import slimeknights.tconstruct.tools.TinkerModifiers;
 
-import javax.annotation.Nullable;
+import java.util.Map;
 import java.util.UUID;
 import java.util.WeakHashMap;
-import java.util.function.BiConsumer;
 
-public class ModToolLeveling extends Modifier implements HarvestEnchantmentsModifierHook, ShearsModifierHook, ProjectileHitModifierHook, ProjectileLaunchModifierHook {
+public class ModToolLeveling extends Modifier implements BlockBreakModifierHook, OnAttackedModifierHook, MeleeHitModifierHook, RawDataModifierHook, VolatileDataModifierHook, ModifierRemovalHook, HarvestEnchantmentsModifierHook, ShearsModifierHook, ProjectileHitModifierHook, ProjectileLaunchModifierHook {
 
     public static final ResourceLocation XP_KEY = new ResourceLocation(TinkerLeveling.MODID, "xp");
     public static final ResourceLocation BONUS_MODIFIERS_KEY = new ResourceLocation(TinkerLeveling.MODID, "bonus_modifiers");
@@ -62,9 +70,13 @@ public class ModToolLeveling extends Modifier implements HarvestEnchantmentsModi
         MinecraftForge.EVENT_BUS.register(this);
     }
 
+    @Override
+    protected void registerHooks(ModuleHookMap.Builder hookBuilder) {
+        hookBuilder.addHook(this, ModifierHooks.LOADER.getValues().stream().filter(h -> h.isValid(this)).toArray(ModuleHook[]::new));
+    }
 
     @Override
-    public void addVolatileData(ToolRebuildContext context, int level, ModDataNBT volatileData) {
+    public void addVolatileData(IToolContext context, ModifierEntry entry, ModDataNBT volatileData) {
         IModDataView persistentData = context.getPersistentData();
         int numExtraModifiers = persistentData.getInt(BONUS_MODIFIERS_KEY);
         int numAbilitySlots = (numExtraModifiers / 2);
@@ -73,21 +85,28 @@ public class ModToolLeveling extends Modifier implements HarvestEnchantmentsModi
     }
 
     @Override
-    public void onRemoved(IToolStackView tool) {
+    public Component onRemoved(IToolStackView tool, Modifier modifier) {
         tool.getPersistentData().remove(XP_KEY);
         tool.getPersistentData().remove(BONUS_MODIFIERS_KEY);
         tool.getPersistentData().remove(LEVEL_KEY);
         tool.getPersistentData().remove(UUID_KEY);
+        return null;
     }
 
     @Override
-    public void addRawData(IToolStackView tool, int level, RestrictedCompoundTag tag) {
+    public void addRawData(IToolStackView tool, ModifierEntry entry, RestrictedCompoundTag tag) {
         if(!tool.getPersistentData().contains(UUID_KEY, Tag.TAG_INT_ARRAY)) {
             tool.getPersistentData().put(UUID_KEY, NbtUtils.createUUID(UUID.randomUUID()));
         }
         if(tool.getPersistentData().getInt(LEVEL_KEY) <= 0) {
             tool.getPersistentData().putInt(LEVEL_KEY, 1);
         }
+    }
+
+    @Override
+    public void removeRawData(IToolStackView tool, Modifier entry, RestrictedCompoundTag restrictedCompoundTag) {
+        tool.getPersistentData().remove(UUID_KEY);
+        tool.getPersistentData().remove(LEVEL_KEY);
     }
 
     public static int getXpForLevelup(int level, Item item) {
@@ -120,7 +139,8 @@ public class ModToolLeveling extends Modifier implements HarvestEnchantmentsModi
 
         if(leveledUp) {
             if(!player.getLevel().isClientSide) {
-                SoundUtils.playSoundForPlayer(player, TinkerLeveling.SOUND_LEVELUP, 1f, 1f);
+                // TODO maybe only play for that player again
+                SoundUtils.playSoundForAll(player, TinkerLeveling.SOUND_LEVELUP, 1f, 1f);
                 TinkerPacketHandler.sendLevelUp(levelData.getInt(LEVEL_KEY), player);
             }
             /* FIXME: no other way of doing this that I see */
@@ -132,27 +152,17 @@ public class ModToolLeveling extends Modifier implements HarvestEnchantmentsModi
         }
     }
 
-    @SuppressWarnings("unchecked")
-    @Nullable
-    @Override
-    public <T> T getModule(Class<T> type) {
-        if (type == IHarvestModifier.class || type == IShearModifier.class) {
-            return (T) this;
-        }
-        return null;
-    }
-
     /* Handlers */
 
     @Override
-    public void afterBlockBreak(IToolStackView tool, int level, ToolHarvestContext context) {
+    public void afterBlockBreak(IToolStackView tool, ModifierEntry entry, ToolHarvestContext context) {
         if(context.isEffective() && context.getPlayer() != null) {
             addXp(tool, 1, context.getPlayer());
         }
     }
 
     @Override
-    public void onAttacked(IToolStackView tool, int level, EquipmentContext context, EquipmentSlot slotType, DamageSource source, float amount, boolean isDirectDamage) {
+    public void onAttacked(IToolStackView tool, ModifierEntry entry, EquipmentContext context, EquipmentSlot slotType, DamageSource source, float amount, boolean isDirectDamage) {
         if(!(context.getEntity() instanceof Player player))
             return;
         boolean wasMobDamage = source.getEntity() != player && source.getEntity() instanceof LivingEntity;
@@ -160,7 +170,7 @@ public class ModToolLeveling extends Modifier implements HarvestEnchantmentsModi
         boolean isLevelableItem;
         if(slotType.getType() == EquipmentSlot.Type.ARMOR && (wasMobDamage || TinkerConfig.allowArmorExploits.get()))
             isLevelableItem = true;
-        else if(player.isBlocking() && blockingModifier != null && ModifierUtil.getActiveModifier(tool) == blockingModifier)
+        else if(player.isBlocking() && blockingModifier != null && GeneralInteractionModifierHook.getActiveModifier(tool) == blockingModifier)
             isLevelableItem = true;
         else
             isLevelableItem = false;
@@ -172,10 +182,10 @@ public class ModToolLeveling extends Modifier implements HarvestEnchantmentsModi
     }
 
     @Override
-    public int afterEntityHit(IToolStackView tool, int level, ToolAttackContext context, float damageDealt) {
+    public void afterMeleeHit(IToolStackView tool, ModifierEntry entry, ToolAttackContext context, float damageDealt) {
         LivingEntity target = context.getLivingTarget();
         if(target == null)
-            return 0;
+            return;
         if(!context.getTarget().getLevel().isClientSide && context.getPlayerAttacker() != null) {
             // if we killed it the event for distributing xp was already fired and we just do it manually here
             if(!context.getTarget().isAlive()) {
@@ -187,11 +197,10 @@ public class ModToolLeveling extends Modifier implements HarvestEnchantmentsModi
                 });
             }
         }
-        return 0;
     }
 
     @Override
-    public void applyHarvestEnchantments(IToolStackView tool, ModifierEntry level, ToolHarvestContext context, BiConsumer<Enchantment, Integer> fn) {
+    public void updateHarvestEnchantments(IToolStackView tool, ModifierEntry level, ToolHarvestContext context, EquipmentContext equipmentContext, EquipmentSlot slot, Map<Enchantment, Integer> enchantmentMap) {
         if(context.getPlayer() != null)
             addXp(tool, 1, context.getPlayer());
     }
@@ -237,10 +246,5 @@ public class ModToolLeveling extends Modifier implements HarvestEnchantmentsModi
             }
         }
         return false;
-    }
-
-    @Override
-    protected void registerHooks(ModifierHookMap.Builder hookBuilder) {
-        hookBuilder.addHook(this, TinkerHooks.PROJECTILE_LAUNCH, TinkerHooks.PROJECTILE_HIT);
     }
 }

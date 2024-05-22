@@ -5,7 +5,6 @@ import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.world.entity.player.Player;
 
 public class ClientHelper {
@@ -18,13 +17,13 @@ public class ClientHelper {
         Component textComponent;
         // special message
         if(I18n.exists("message.levelup." + level)) {
-            textComponent = new TranslatableComponent("message.levelup." + level, "tool").withStyle(style -> style.withColor(ChatFormatting.DARK_AQUA));
+            textComponent = Component.translatable("message.levelup." + level, "tool").withStyle(style -> style.withColor(ChatFormatting.DARK_AQUA));
         }
         // generic message
         else {
-            textComponent = new TranslatableComponent("message.levelup.generic", "tool").append(ClientEvents.getLevelString(level));
+            textComponent = Component.translatable("message.levelup.generic", "tool").append(ClientEvents.getLevelString(level));
         }
-        Minecraft.getInstance().player.sendMessage(textComponent, Util.NIL_UUID);
+        Minecraft.getInstance().player.sendSystemMessage(textComponent);
     }
 
 }
