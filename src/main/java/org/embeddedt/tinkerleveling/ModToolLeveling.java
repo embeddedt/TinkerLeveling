@@ -24,6 +24,7 @@ import slimeknights.tconstruct.common.SoundUtils;
 import slimeknights.tconstruct.library.modifiers.Modifier;
 import slimeknights.tconstruct.library.modifiers.ModifierEntry;
 import slimeknights.tconstruct.library.modifiers.ModifierHooks;
+import slimeknights.tconstruct.library.modifiers.hook.armor.ElytraFlightModifierHook;
 import slimeknights.tconstruct.library.modifiers.hook.armor.OnAttackedModifierHook;
 import slimeknights.tconstruct.library.modifiers.hook.build.ConditionalStatModifierHook;
 import slimeknights.tconstruct.library.modifiers.hook.build.ModifierRemovalHook;
@@ -52,7 +53,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.WeakHashMap;
 
-public class ModToolLeveling extends Modifier implements BlockBreakModifierHook, OnAttackedModifierHook, MeleeHitModifierHook, RawDataModifierHook, VolatileDataModifierHook, ModifierRemovalHook, HarvestEnchantmentsModifierHook, ShearsModifierHook, ProjectileHitModifierHook, ProjectileLaunchModifierHook {
+public class ModToolLeveling extends Modifier implements BlockBreakModifierHook, ElytraFlightModifierHook, OnAttackedModifierHook, MeleeHitModifierHook, RawDataModifierHook, VolatileDataModifierHook, ModifierRemovalHook, HarvestEnchantmentsModifierHook, ShearsModifierHook, ProjectileHitModifierHook, ProjectileLaunchModifierHook {
 
     public static final ResourceLocation XP_KEY = new ResourceLocation(TinkerLeveling.MODID, "xp");
     public static final ResourceLocation BONUS_MODIFIERS_KEY = new ResourceLocation(TinkerLeveling.MODID, "bonus_modifiers");
@@ -160,6 +161,15 @@ public class ModToolLeveling extends Modifier implements BlockBreakModifierHook,
         if(context.isEffective() && context.getPlayer() != null) {
             addXp(tool, 1, context.getPlayer());
         }
+    }
+
+    @Override
+    public boolean elytraFlightTick(IToolStackView iToolStackView, ModifierEntry modifierEntry, LivingEntity livingEntity, int numTicksFlying) {
+        // Grant 1 XP every 5 seconds
+        if(numTicksFlying > 0 && (numTicksFlying % 100) == 0 && livingEntity instanceof Player player) {
+            addXp(iToolStackView, 1, player);
+        }
+        return false;
     }
 
     @Override
