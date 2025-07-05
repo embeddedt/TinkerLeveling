@@ -26,7 +26,7 @@ minecraft {
     //
     // Use non-default mappings at your own risk. They may not always work.
     // Simply re-run your setup task after changing the mappings to update your workspace.
-    mappings channel: 'official', version: '1.19.2'
+    mappings channel: 'official', version: '1.20.1'
 
     // accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
 
@@ -142,12 +142,12 @@ dependencies {
     // Specify the version of Minecraft to use. If this is any group other than 'net.minecraft' it is assumed
     // that the dep is a ForgeGradle 'patcher' dependency, and its patches will be applied.
     // The userdev artifact is a special name and will get all sorts of transformations applied to it.
-    minecraft 'net.minecraftforge:forge:1.19.2-43.3.0'
+    minecraft 'net.minecraftforge:forge:1.20.1-47.4.0'
 
-    implementation fg.deobf("slimeknights.mantle:Mantle:1.19.2-1.10.35")
-    implementation fg.deobf("slimeknights.tconstruct:TConstruct:1.19.2-3.8.3.39")
+    implementation fg.deobf("slimeknights.mantle:Mantle:1.20.1-1.11.63")
+    implementation fg.deobf("slimeknights.tconstruct:TConstruct:1.20.1-3.10.1.76")
 
-    runtimeOnly fg.deobf("curse.maven:modernfix-790626:5288170")
+    // runtimeOnly fg.deobf("curse.maven:modernfix-790626:5288170")
 
     // Real mod deobf dependency examples - these get remapped to your current mappings
     // compileOnly fg.deobf("mezz.jei:jei-${mc_version}:${jei_version}:api") // Adds JEI API as a compile dependency
@@ -197,7 +197,7 @@ curseforge {
             changelogType = "markdown"
             releaseType = "release"
             addGameVersion "Forge"
-            addGameVersion "1.19.2"
+            addGameVersion "1.20.1"
 
             mainArtifact(jar) {
                 relations {

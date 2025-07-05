@@ -20,6 +20,7 @@ import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraftforge.common.MinecraftForge;
 import org.embeddedt.tinkerleveling.capability.CapabilityDamageXp;
+import org.jetbrains.annotations.Nullable;
 import slimeknights.tconstruct.common.SoundUtils;
 import slimeknights.tconstruct.library.modifiers.Modifier;
 import slimeknights.tconstruct.library.modifiers.ModifierEntry;
@@ -76,9 +77,9 @@ public class ModToolLeveling extends Modifier implements BlockBreakModifierHook,
     protected void registerHooks(ModuleHookMap.Builder hookBuilder) {
         hookBuilder.addHook(this, ModifierHooks.LOADER.getValues().stream().filter(h -> h.isValid(this)).toArray(ModuleHook[]::new));
     }
-
+    
     @Override
-    public void addVolatileData(IToolContext context, ModifierEntry entry, ModDataNBT volatileData) {
+    public void addVolatileData(IToolContext context, ModifierEntry entry, ToolDataNBT volatileData) {
         IModDataView persistentData = context.getPersistentData();
         int numExtraModifiers = persistentData.getInt(BONUS_MODIFIERS_KEY);
         int numAbilitySlots = (numExtraModifiers / 2);
@@ -140,7 +141,7 @@ public class ModToolLeveling extends Modifier implements BlockBreakModifierHook,
         }
 
         if(leveledUp) {
-            if(!player.getLevel().isClientSide) {
+            if(!player.level().isClientSide) {
                 // TODO maybe only play for that player again
                 SoundUtils.playSoundForAll(player, TinkerLeveling.SOUND_LEVELUP, 1f, 1f);
                 TinkerPacketHandler.sendLevelUp(levelData.getInt(LEVEL_KEY), player);
@@ -187,7 +188,7 @@ public class ModToolLeveling extends Modifier implements BlockBreakModifierHook,
             isLevelableItem = false;
         if(isDirectDamage
                 && isLevelableItem
-                && !player.getLevel().isClientSide) {
+                && !player.level().isClientSide) {
             addXp(tool, 1, player);
         }
     }
@@ -197,7 +198,7 @@ public class ModToolLeveling extends Modifier implements BlockBreakModifierHook,
         LivingEntity target = context.getLivingTarget();
         if(target == null)
             return;
-        if(!context.getTarget().getLevel().isClientSide && context.getPlayerAttacker() != null) {
+        if(!context.getTarget().level().isClientSide && context.getPlayerAttacker() != null) {
             // if we killed it the event for distributing xp was already fired and we just do it manually here
             if(!context.getTarget().isAlive()) {
                 addXp(tool, Math.round(damageDealt), context.getPlayerAttacker());
@@ -220,9 +221,9 @@ public class ModToolLeveling extends Modifier implements BlockBreakModifierHook,
     public void afterShearEntity(IToolStackView tool, ModifierEntry level, Player player, Entity entity, boolean isTarget) {
         addXp(tool, 1, player);
     }
-
+    
     @Override
-    public void onProjectileLaunch(IToolStackView iToolStackView, ModifierEntry modifierEntry, LivingEntity livingEntity, Projectile projectile, @org.jetbrains.annotations.Nullable AbstractArrow abstractArrow, NamespacedNBT namespacedNBT, boolean b) {
+    public void onProjectileLaunch(IToolStackView iToolStackView, ModifierEntry modifierEntry, LivingEntity livingEntity, Projectile projectile, @org.jetbrains.annotations.Nullable AbstractArrow abstractArrow, ModDataNBT namespacedNBT, boolean b) {
         if(livingEntity instanceof Player player) {
             ItemStack stack = player.getUseItem();
             if(stack.isEmpty()) {
@@ -244,7 +245,7 @@ public class ModToolLeveling extends Modifier implements BlockBreakModifierHook,
     }
 
     @Override
-    public boolean onProjectileHitEntity(ModifierNBT modifiers, NamespacedNBT persistentData, ModifierEntry modifier, Projectile projectile, EntityHitResult hit, @org.jetbrains.annotations.Nullable LivingEntity attacker, @org.jetbrains.annotations.Nullable LivingEntity target) {
+    public boolean onProjectileHitEntity(ModifierNBT modifiers, ModDataNBT persistentData, ModifierEntry modifier, Projectile projectile, EntityHitResult hit, @org.jetbrains.annotations.Nullable LivingEntity attacker, @org.jetbrains.annotations.Nullable LivingEntity target) {
         if(projectile.getDeltaMovement().length() > 0.4f && attacker instanceof Player player) {
             Pair<ItemStack, Integer> launchInfo;
             synchronized (LAUNCH_INFO_MAP) {

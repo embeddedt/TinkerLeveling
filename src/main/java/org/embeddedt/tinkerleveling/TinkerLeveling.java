@@ -68,7 +68,7 @@ public class TinkerLeveling {
 
     @SubscribeEvent
     public void onDeath(LivingDeathEvent event) {
-        if(!event.getEntity().getLevel().isClientSide) {
+        if(!event.getEntity().level().isClientSide) {
             event.getEntity().getCapability(CapabilityDamageXp.CAPABILITY, null).ifPresent(cap -> {
                 cap.distributeXpToTools(event.getEntity());
             });
@@ -89,7 +89,7 @@ public class TinkerLeveling {
     @SubscribeEvent
     public void onPlayerTick(TickEvent.PlayerTickEvent event) {
         /* TODO: replace with tool building event if/when Tinkers adds one */
-        if(!event.player.getLevel().isClientSide) {
+        if(!event.player.level().isClientSide) {
             Inventory inventory = event.player.getInventory();
             processInvList(inventory.items);
             processInvList(inventory.armor);
@@ -98,7 +98,7 @@ public class TinkerLeveling {
     }
 
     public static ResourceLocation SOUND_LEVELUP_LOCATION = new ResourceLocation(TinkerLeveling.MODID, "levelup");
-    public static SoundEvent SOUND_LEVELUP = new SoundEvent(SOUND_LEVELUP_LOCATION);
+    public static SoundEvent SOUND_LEVELUP = SoundEvent.createVariableRangeEvent(SOUND_LEVELUP_LOCATION);
 
     @SubscribeEvent
     public static void registerSoundEvent(RegisterEvent event) {

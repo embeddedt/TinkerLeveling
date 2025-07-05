@@ -47,7 +47,7 @@ public class DamageXp implements IDamageXp {
 
     @Override
     public void distributeXpToTools(LivingEntity deadEntity) {
-        playerToDamageMap.forEach((uuid, itemStackFloatMap) -> distributeXpForPlayer(deadEntity.getLevel(), uuid, itemStackFloatMap));
+        playerToDamageMap.forEach((uuid, itemStackFloatMap) -> distributeXpForPlayer(deadEntity.level(), uuid, itemStackFloatMap));
     }
 
     private void distributeXpForPlayer(Level world, UUID playerUuid, Map<UUID, Float> damageMap) {
